@@ -1,0 +1,19 @@
+.login {
+  &__card {
+    width: 300px;
+  }
+
+  &__field {
+    width: 100%;
+  }
+
+  &__button {
+    margin-top: 12px;
+    width: 100%;
+
+    &_registration {
+      font-size: 0.8rem;
+      color: rgb(146 146 146);
+    }
+  }
+}

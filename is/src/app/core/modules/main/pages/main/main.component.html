@@ -1,0 +1,73 @@
+<mat-toolbar class="main__toolbar">
+  <span>Socket app</span>
+  <span class="main__spacer"></span>
+  <button mat-button (click)="onLogout()">выйти</button>
+</mat-toolbar>
+<div class="main__container">
+  <div class="main__text-container">
+    <div class="main__date-block">
+      <h2 *ngIf="date; else dateLoading"><span>Сегодня: </span> {{ date | date: 'medium' }}</h2>
+      <ng-template #dateLoading>
+        <div class="main__text-loader">
+          <ngx-skeleton-loader
+            count="1"
+            appearance="line"
+            [theme]="{
+              marginBottom: '16px'
+            }"
+          ></ngx-skeleton-loader>
+        </div>
+      </ng-template>
+
+      <h2 *ngIf="scheduleMessage; else scheduleLoading"><span>Сообщение: </span>{{ scheduleMessage }}</h2>
+      <ng-template #scheduleLoading>
+        <div class="main__text-loader">
+          <ngx-skeleton-loader
+            count="1"
+            appearance="line"
+            [theme]="{
+              marginBottom: '16px'
+            }"
+          >
+          </ngx-skeleton-loader>
+        </div>
+      </ng-template>
+    </div>
+
+    <div class="main__date-block" *ngIf="weather; else weatherLoading">
+      <h2><span>Город: </span> {{ weather?.name }}</h2>
+      <h2><span>Температура: </span> {{ weather?.main?.temp }}°C (ощущается как {{ weather?.main?.feels_like }}°C)</h2>
+      <h2><span>Влажность: </span> {{ weather?.main?.humidity }} %</h2>
+      <h2><span>Ветер: </span> {{ weather?.wind?.speed }} м/с</h2>
+    </div>
+    <ng-template #weatherLoading>
+      <div class="main__text-loader">
+        <ngx-skeleton-loader
+          count="5"
+          appearance="line"
+          [theme]="{
+            marginBottom: '16px'
+          }"
+        ></ngx-skeleton-loader>
+      </div>
+    </ng-template>
+
+    <div class="main__coords-block">
+      <button mat-flat-button class="main__coords-button" (click)="getUserPosition()">Получить координаты</button>
+      <h2 class="main__coords-text">{{ coordinates ? coordinates?.lat + ' : ' + coordinates?.lng : '' }}</h2>
+    </div>
+  </div>
+
+  <mat-card class="main__image-block mat-elevation-z4">
+    <ng-container *ngIf="image; else imageLoading">
+      <img class="main__image" [src]="image" />
+    </ng-container>
+
+    <ng-template #imageLoading>
+      <div class="main__loader">
+        <mat-progress-spinner mode="indeterminate" color="primary" diameter="30"></mat-progress-spinner>
+        <p class="main__loader-text">ожидание изображения</p>
+      </div>
+    </ng-template>
+  </mat-card>
+</div>

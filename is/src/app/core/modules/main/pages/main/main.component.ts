@@ -1,18 +1,13 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-
-import { Select, Store } from '@ngxs/store';
-
-import { untilDestroyed } from 'ngx-take-until-destroy';
-
-import { Observable } from 'rxjs';
-import { filter } from 'rxjs/operators';
-
-import { SocketService } from 'app/core/services/socket.service';
+import { Store } from '@ngxs/store';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { Logout } from 'app/core/state/auth-state/auth.actions';
-import { AuthState } from 'app/core/state/auth-state/auth.state';
-
-import { IUser } from 'lib/interfaces/user.interface';
 import { Router } from '@angular/router';
+import { IQuestion, IQuestionStructure } from './../../../../../../lib/interfaces/question.interface';
+import { AuthService } from 'app/core/services/auth.service';
+import { untilDestroyed } from 'ngx-take-until-destroy';
+import { take } from 'rxjs/operators';
+import { isPlatformBrowser } from '@angular/common';
 
 @Component({
   selector: 'app-main',
@@ -20,76 +15,53 @@ import { Router } from '@angular/router';
   styleUrls: ['main.component.scss']
 })
 export class MainPageComponent implements OnInit, OnDestroy {
-  @Select(AuthState.user) private user$: Observable<IUser>;
+  public questions: IQuestionStructure;
+  public currentQuestions$ = new BehaviorSubject<IQuestion[]>([]);
+  public answers: { questionId: number; answer: string }[] = [];
 
-  public userId: string;
-  public date: string;
-  public weather: any;
-  public image: string | null;
-  public scheduleMessage: string;
-  public coordinates: { lat: number; lng: number };
-
-  constructor(private socketService: SocketService, private store: Store, private router: Router) {}
+  constructor(private store: Store, private router: Router, private authService: AuthService) {}
 
   public ngOnInit() {
-    this.user$
-      .pipe(
-        filter(user => !!user),
-        untilDestroyed(this)
-      )
-      .subscribe(user => {
-        this.userId = user.id;
-      });
+    this.authService
+      .getQuestions()
+      .pipe(untilDestroyed(this), take(1))
+      .subscribe(value => {
+        this.questions = value;
 
-    this.socketService
-      .listen('date')
-      .pipe(untilDestroyed(this))
-      .subscribe((data: string) => {
-        this.date = data;
-      });
-
-    this.socketService
-      .listen('weather')
-      .pipe(untilDestroyed(this))
-      .subscribe((data: any) => {
-        this.weather = data;
-      });
-
-    this.socketService
-      .listen('image')
-      .pipe(untilDestroyed(this))
-      .subscribe((data: string) => {
-        if (!data) {
-          this.image = null;
-        } else {
-          this.image = `assets/images/${data}.png`;
-        }
-      });
-
-    this.socketService
-      .listen('schedule')
-      .pipe(untilDestroyed(this))
-      .subscribe((data: string) => {
-        this.scheduleMessage = data;
+        this.currentQuestions$.next([this.questions['main']]);
       });
   }
 
-  public ngOnDestroy() {
-    this.socketService.emit('leaveRoom', this.userId);
-  }
-
-  public getUserPosition() {
-    navigator.geolocation.getCurrentPosition(position => {
-      this.coordinates = {
-        lat: position.coords.latitude,
-        lng: position.coords.longitude
-      };
-    });
-  }
+  public ngOnDestroy() {}
 
   public onLogout() {
     this.store.dispatch(new Logout()).subscribe(() => {
       this.router.navigate(['/auth/login']);
     });
+  }
+
+  public lol({ value }, questionId: number) {
+    const currentQuestionIndex = this.currentQuestions$.value.findIndex(item => item.id === questionId);
+
+    let questions = [...this.currentQuestions$.value];
+    let nextQuestions = [];
+    questions[currentQuestionIndex].answer = value;
+    questions = questions.slice(0, currentQuestionIndex + 1);
+
+    questions.forEach(item => {
+      if (item.answer) {
+        nextQuestions.push(this.questions[item.answer]);
+      }
+    });
+
+    console.log('nextQuestions', nextQuestions);
+
+    questions.push(this.questions[value]);
+
+    this.currentQuestions$.next(questions);
+  }
+
+  public getSelectedValue(questionId: number, value: string): boolean {
+    return this.currentQuestions$.value?.find(item => item.id === questionId)?.answer === value;
   }
 }

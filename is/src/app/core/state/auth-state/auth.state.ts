@@ -19,7 +19,6 @@ import {
   RegisterSuccess
 } from './auth.actions';
 import { AuthStateModel } from './auth.model';
-import { SocketService } from 'app/core/services/socket.service';
 
 @State<AuthStateModel>({
   name: 'auth',
@@ -31,7 +30,7 @@ import { SocketService } from 'app/core/services/socket.service';
 })
 @Injectable()
 export class AuthState implements NgxsOnInit {
-  constructor(private authService: AuthService, private socketService: SocketService) {}
+  constructor(private authService: AuthService) {}
 
   @Selector() public static user({ user }: AuthStateModel) {
     return user;
@@ -57,7 +56,6 @@ export class AuthState implements NgxsOnInit {
       filter(user => !!user),
       tap(user => {
         ctx.patchState({ user, isAuthed: true });
-        this.socketService.emit('joinRoom', user.id);
       }),
       tap(() => ctx.dispatch(new LoginSuccess())),
       catchError(error => {
@@ -89,9 +87,7 @@ export class AuthState implements NgxsOnInit {
 
     if (user) {
       return this.authService.logout(user.id).pipe(
-        tap(() => {
-          this.socketService.emit('leaveRoom', user.id);
-        }),
+        tap(() => {}),
         catchError(error => {
           return throwError(error);
         })
@@ -111,7 +107,6 @@ export class AuthState implements NgxsOnInit {
       return this.authService.checkSession(user.id).pipe(
         tap(resp => {
           if (resp) {
-            this.socketService.emit('joinRoom', user.id);
           } else {
             ctx.dispatch(new Logout());
           }

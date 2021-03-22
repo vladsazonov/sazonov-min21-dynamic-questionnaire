@@ -4,67 +4,107 @@ const express = require('express');
 
 const app = require('express')();
 const http = require('http').Server(app);
-const io = require('socket.io')(http, {
-  cors: {
-    origin: 'http://localhost:4200',
-    methods: ['GET', 'POST']
-  }
-});
 
-const imageModule = require('./modules/image');
-const weatherModule = require('./modules/weather');
-const dateModule = require('./modules/date');
-const scheduleModule = require('./modules/schedule');
-
-const users = [{ email: '1@1.ru', password: '123', id: '1' }];
+const users = [
+  { email: '1@1.ru', password: '123', id: '1' },
+  { email: 'admin@oz.ru', password: 'qwerty123', id: '2' }
+];
 const authUsers = [];
 
-const apiKey = '3002d67cb8a320168061e244695ed009';
-const city = 'rostov-on-don';
-const url = `http://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${apiKey}`;
-
-io.on('connection', socket => {
-  console.log('socket connected');
-
-  socket.on('disconnect', () => {
-    console.log('socket disconnected');
-
-    weatherModule.stopWeatherInterval();
-
-    imageModule.stopImageInterval();
-
-    dateModule.stopDateInterval();
-  });
-
-  socket.on('joinRoom', room => {
-    if (!io.sockets.adapter.rooms.get(room)) {
-      socket.join(room);
-    }
-
-    let i = 0;
-
-    imageModule.sendImage(i, io, room);
-
-    dateModule.getDate(io, room);
-
-    weatherModule.getWeather(url, io, room);
-
-    scheduleModule.getSchedule(io, room);
-  });
-
-  socket.on('leaveRoom', room => {
-    socket.leave(room);
-
-    weatherModule.stopWeatherInterval();
-
-    imageModule.stopImageInterval();
-
-    dateModule.stopDateInterval();
-  });
-});
+const questions = {
+  main: {
+    id: 1,
+    title: 'Выберите животное которое нравится вам больше всего',
+    answer: null,
+    options: [
+      {
+        id: 11,
+        name: 'Кошка',
+        value: 'cat'
+      },
+      {
+        id: 12,
+        name: 'Собака',
+        value: 'dog'
+      }
+    ]
+  },
+  dog: {
+    id: 2,
+    title: 'У вас жила когда-нибудь дома собака?',
+    answer: null,
+    options: [
+      {
+        id: 21,
+        name: 'да',
+        value: 'yes2'
+      },
+      {
+        id: 22,
+        name: 'нет',
+        value: 'no2'
+      }
+    ]
+  },
+  cat: {
+    id: 3,
+    title: 'У вас жила когда-нибудь дома кошка?',
+    answer: null,
+    options: [
+      {
+        id: 31,
+        name: 'да',
+        value: 'yes3'
+      },
+      {
+        id: 32,
+        name: 'нет',
+        value: 'no3'
+      }
+    ]
+  },
+  yes3: {
+    id: 4,
+    title: 'Чем вы кормите кошку?',
+    answer: null,
+    options: [
+      {
+        id: 41,
+        name: 'Сухой корм',
+        value: 'yes4'
+      },
+      {
+        id: 42,
+        name: 'Натуральная еда',
+        value: 'no4'
+      }
+    ]
+  },
+  no3: {
+    id: 5,
+    title: 'Вы бы хотели завести кошку?',
+    answer: null,
+    options: [
+      {
+        id: 41,
+        name: 'Да',
+        value: 'yes5'
+      },
+      {
+        id: 42,
+        name: 'нет',
+        value: 'no5'
+      }
+    ]
+  }
+};
 
 app.use(bodyParser.json());
 app.use(express.static(process.cwd() + '/is/dist/is/'));
+
+app.get('/api/questions', (req, res) => {
+  res.json(questions);
+});
 
 app.post('/api/login', (req, res) => {
   const user = users.find(user => user.email === req.body.email && user.password === req.body.password);

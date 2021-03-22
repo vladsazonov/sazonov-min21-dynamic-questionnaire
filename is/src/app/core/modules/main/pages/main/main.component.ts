@@ -1,13 +1,17 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Store } from '@ngxs/store';
-import { BehaviorSubject, Observable } from 'rxjs';
-import { Logout } from 'app/core/state/auth-state/auth.actions';
 import { Router } from '@angular/router';
-import { IQuestion, IQuestionStructure } from './../../../../../../lib/interfaces/question.interface';
+
 import { AuthService } from 'app/core/services/auth.service';
-import { untilDestroyed } from 'ngx-take-until-destroy';
+import { Logout } from 'app/core/state/auth-state/auth.actions';
+
+import { IQuestion, IQuestionStructure } from './../../../../../../lib/interfaces/question.interface';
+
+import { Store } from '@ngxs/store';
+
+import { BehaviorSubject } from 'rxjs';
 import { take } from 'rxjs/operators';
-import { isPlatformBrowser } from '@angular/common';
+
+import { untilDestroyed } from 'ngx-take-until-destroy';
 
 @Component({
   selector: 'app-main',
@@ -16,8 +20,9 @@ import { isPlatformBrowser } from '@angular/common';
 })
 export class MainPageComponent implements OnInit, OnDestroy {
   public questions: IQuestionStructure;
+  public currentQuestions: IQuestion[] = [];
+
   public currentQuestions$ = new BehaviorSubject<IQuestion[]>([]);
-  public answers: { questionId: number; answer: string }[] = [];
 
   constructor(private store: Store, private router: Router, private authService: AuthService) {}
 
@@ -30,6 +35,8 @@ export class MainPageComponent implements OnInit, OnDestroy {
 
         this.currentQuestions$.next([this.questions['main']]);
       });
+
+    this.currentQuestions$.pipe(untilDestroyed(this)).subscribe(value => (this.currentQuestions = value));
   }
 
   public ngOnDestroy() {}
@@ -40,28 +47,28 @@ export class MainPageComponent implements OnInit, OnDestroy {
     });
   }
 
-  public lol({ value }, questionId: number) {
-    const currentQuestionIndex = this.currentQuestions$.value.findIndex(item => item.id === questionId);
+  public onChange({ value }, questionId: number) {
+    const currentQuestionIndex = this.currentQuestions.findIndex(item => item.id === questionId);
+    const questions = [...this.currentQuestions];
 
-    let questions = [...this.currentQuestions$.value];
-    let nextQuestions = [];
     questions[currentQuestionIndex].answer = value;
-    questions = questions.slice(0, currentQuestionIndex + 1);
 
-    questions.forEach(item => {
-      if (item.answer) {
-        nextQuestions.push(this.questions[item.answer]);
+    for (let i = currentQuestionIndex + 1; i < questions.length; i++) {
+      if (questions[i]) {
+        questions[i].answer = null;
       }
-    });
+    }
 
-    console.log('nextQuestions', nextQuestions);
+    const slicedQuestions = questions.slice(0, currentQuestionIndex + 1);
 
-    questions.push(this.questions[value]);
-
-    this.currentQuestions$.next(questions);
+    this.currentQuestions$.next([...slicedQuestions, this.questions[value]]);
   }
 
   public getSelectedValue(questionId: number, value: string): boolean {
-    return this.currentQuestions$.value?.find(item => item.id === questionId)?.answer === value;
+    return this.currentQuestions?.find(item => item.id === questionId)?.answer === value;
+  }
+
+  public resetQuestions() {
+    this.onChange({ value: null }, 1);
   }
 }

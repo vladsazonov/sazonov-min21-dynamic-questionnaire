@@ -1,9 +1,5 @@
 export interface IQuestionStructure {
-  main: IQuestion;
-  dog: IQuestion;
-  cat: IQuestion;
-  yes3: IQuestion;
-  no3: IQuestion;
+  key: IQuestion;
 }
 
 export interface IQuestion {

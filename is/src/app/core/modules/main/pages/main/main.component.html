@@ -5,22 +5,29 @@
 </mat-toolbar>
 
 <mat-card class="main__block mat-elevation-z4">
-  <ng-container *ngFor="let question of currentQuestions$ | async">
-    <h3>{{ question.title }}</h3>
+  <ng-container *ngFor="let question of currentQuestions">
+    <ng-container *ngIf="question">
+      <h3>{{ question.title }}</h3>
 
-    <mat-radio-group
-      aria-labelledby="example-radio-group-label"
-      class="main__radio-group"
-      (change)="lol($event, question.id)"
-    >
-      <mat-radio-button
-        [checked]="getSelectedValue(question.id, option.value)"
-        class="main__radio-button"
-        *ngFor="let option of question.options"
-        [value]="option.value"
+      <mat-radio-group
+        *ngIf="!!question.options; else resetButton"
+        aria-labelledby="example-radio-group-label"
+        class="main__radio-group"
+        (change)="onChange($event, question.id)"
       >
-        {{ option.name }}
-      </mat-radio-button>
-    </mat-radio-group>
+        <mat-radio-button
+          [checked]="getSelectedValue(question.id, option.value)"
+          class="main__radio-button"
+          *ngFor="let option of question.options"
+          [value]="option.value"
+        >
+          {{ option.name }}
+        </mat-radio-button>
+      </mat-radio-group>
+
+      <ng-template #resetButton>
+        <button mat-flat-button color="primary" (click)="resetQuestions()">Заново</button>
+      </ng-template>
+    </ng-container>
   </ng-container>
 </mat-card>

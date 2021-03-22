@@ -6,7 +6,6 @@ import { NgxsModule } from '@ngxs/store';
 import { environment } from 'environments/environment';
 
 import { AuthService } from './services/auth.service';
-import { SocketService } from './services/socket.service';
 
 import { AuthState } from './state/auth-state/auth.state';
 
@@ -18,6 +17,6 @@ import { AuthState } from './state/auth-state/auth.state';
     }),
     NgxsRouterPluginModule.forRoot()
   ],
-  providers: [AuthService, SocketService]
+  providers: [AuthService]
 })
 export class CoreModule {}
